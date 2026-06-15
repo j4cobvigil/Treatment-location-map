@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Treatment Route Map</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQTsOZn6Thl3kQ2gOMyPCBQpV6Ufgw0="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Treatment locations">
+        <header class="app-header">
+          <div>
+            <p class="eyebrow">Field Routes</p>
+            <h1>Treatment Location Map</h1>
+          </div>
+          <span class="site-count" id="siteCount">0 sites</span>
+        </header>
+
+        <section class="controls" aria-label="Route settings">
+          <label class="field">
+            <span>Starting point</span>
+            <div class="origin-row">
+              <input
+                id="originInput"
+                type="text"
+                autocomplete="street-address"
+                placeholder="Current location, address, or lat,lng"
+              />
+              <button class="icon-button" id="locateButton" type="button" title="Use my location" aria-label="Use my location">
+                <span aria-hidden="true">GPS</span>
+              </button>
+            </div>
+          </label>
+
+          <div class="mode-row" role="radiogroup" aria-label="Travel mode">
+            <label>
+              <input type="radio" name="travelMode" value="driving" checked />
+              <span>Driving</span>
+            </label>
+            <label>
+              <input type="radio" name="travelMode" value="walking" />
+              <span>Walking</span>
+            </label>
+            <label>
+              <input type="radio" name="travelMode" value="bicycling" />
+              <span>Biking</span>
+            </label>
+          </div>
+
+          <label class="checkbox-row">
+            <input id="navigateToggle" type="checkbox" checked />
+            <span>Open in navigation mode</span>
+          </label>
+        </section>
+
+        <section class="search-panel" aria-label="Search sites">
+          <label class="field">
+            <span>Find a site</span>
+            <input id="searchInput" type="search" placeholder="Name, operator, status, or type" />
+          </label>
+        </section>
+
+        <div class="list-heading">
+          <span>Locations</span>
+          <button id="resetButton" type="button">Reset view</button>
+        </div>
+
+        <ol class="site-list" id="siteList" aria-label="Treatment location list"></ol>
+      </aside>
+
+      <main class="map-panel">
+        <div id="map" class="map" role="application" aria-label="Well site map">
+          <div class="map-fallback" id="mapFallback">
+            <div class="fallback-grid" id="fallbackGrid"></div>
+          </div>
+        </div>
+
+        <section class="detail-panel" id="detailPanel" aria-live="polite">
+          <div>
+            <p class="eyebrow">Selected Location</p>
+            <h2 id="detailName">Select a treatment location</h2>
+            <p id="detailMeta">Choose a marker or list item to view coordinates and route links.</p>
+          </div>
+          <div class="detail-actions">
+            <a class="primary-link disabled" id="detailRoute" href="#" target="_blank" rel="noopener">Route</a>
+            <a class="secondary-link disabled" id="detailMapLink" href="#" target="_blank" rel="noopener">Open map</a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="sites.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
