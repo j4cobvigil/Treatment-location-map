@@ -28,39 +28,9 @@
         </header>
 
         <section class="controls" aria-label="Route settings">
-          <label class="field">
-            <span>Starting point</span>
-            <div class="origin-row">
-              <input
-                id="originInput"
-                type="text"
-                autocomplete="street-address"
-                placeholder="Current location, address, or lat,lng"
-              />
-              <button class="icon-button" id="locateButton" type="button" title="Use my location" aria-label="Use my location">
-                <span aria-hidden="true">GPS</span>
-              </button>
-            </div>
-          </label>
-
-          <div class="mode-row" role="radiogroup" aria-label="Travel mode">
-            <label>
-              <input type="radio" name="travelMode" value="driving" checked />
-              <span>Driving</span>
-            </label>
-            <label>
-              <input type="radio" name="travelMode" value="walking" />
-              <span>Walking</span>
-            </label>
-            <label>
-              <input type="radio" name="travelMode" value="bicycling" />
-              <span>Biking</span>
-            </label>
-          </div>
-
           <label class="checkbox-row">
             <input id="navigateToggle" type="checkbox" checked />
-            <span>Open in navigation mode</span>
+            <span>Open driving directions from current location</span>
           </label>
         </section>
 

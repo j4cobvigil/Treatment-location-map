@@ -27,7 +27,7 @@ To update the list later, replace `sites.js` entries with objects in this shape:
 }
 ```
 
-The route buttons use Google Maps URLs with latitude and longitude destinations. Leave the starting point blank to let Google Maps use the user's current location when available, or enter an address or `lat,lng` origin in the app.
+The route buttons use Google Maps URLs with latitude and longitude destinations. Routes are opened as driving directions and let Google Maps use the user's current location as the starting point.
 
 Each location card has an Active/Inactive checkbox. Checked locations display as `Active`; unchecked locations display as `Inactive`. Changing a status requires the app PIN. After the correct PIN is entered, toggles stay unlocked for that browser session. Those choices are saved in the browser's local storage, so they persist on that device/browser after refresh.
 

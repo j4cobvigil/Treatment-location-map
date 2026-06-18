@@ -15,8 +15,6 @@
 
   const els = {
     siteCount: document.querySelector("#siteCount"),
-    originInput: document.querySelector("#originInput"),
-    locateButton: document.querySelector("#locateButton"),
     navigateToggle: document.querySelector("#navigateToggle"),
     searchInput: document.querySelector("#searchInput"),
     resetButton: document.querySelector("#resetButton"),
@@ -29,10 +27,6 @@
     detailRoute: document.querySelector("#detailRoute"),
     detailMapLink: document.querySelector("#detailMapLink")
   };
-
-  function getTravelMode() {
-    return document.querySelector("input[name='travelMode']:checked")?.value || "driving";
-  }
 
   function formatCoord(value) {
     return Number(value).toFixed(5);
@@ -181,13 +175,8 @@
     const params = new URLSearchParams({
       api: "1",
       destination: `${site.lat},${site.lng}`,
-      travelmode: getTravelMode()
+      travelmode: "driving"
     });
-
-    const origin = els.originInput.value.trim();
-    if (origin) {
-      params.set("origin", origin);
-    }
 
     if (els.navigateToggle.checked) {
       params.set("dir_action", "navigate");
@@ -487,41 +476,14 @@
     fitMapToSites(state.filteredSites);
   }
 
-  function locateUser() {
-    if (!navigator.geolocation) {
-      window.alert("Location is not available in this browser.");
-      return;
-    }
-
-    els.locateButton.disabled = true;
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        els.originInput.value = `${position.coords.latitude.toFixed(6)},${position.coords.longitude.toFixed(6)}`;
-        els.locateButton.disabled = false;
-        updateRouteLinks();
-      },
-      () => {
-        els.locateButton.disabled = false;
-        window.alert("Could not get your location. You can enter an address or lat,lng manually.");
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
-  }
-
   function bindEvents() {
     els.searchInput.addEventListener("input", applySearch);
-    els.originInput.addEventListener("input", updateRouteLinks);
     els.navigateToggle.addEventListener("change", updateRouteLinks);
-    els.locateButton.addEventListener("click", locateUser);
     els.resetButton.addEventListener("click", () => {
       els.searchInput.value = "";
       state.filteredSites = sites;
       renderList();
       fitMapToSites();
-    });
-
-    document.querySelectorAll("input[name='travelMode']").forEach((control) => {
-      control.addEventListener("change", updateRouteLinks);
     });
   }
 
