@@ -158,6 +158,7 @@
 
       const routeUrl = buildDirectionsUrl(site);
       const mapUrl = buildMapUrl(site);
+      const notesHtml = site.notes ? `<p class="site-notes">${escapeHtml(site.notes)}</p>` : "";
 
       item.innerHTML = `
         <div class="site-main">
@@ -167,7 +168,7 @@
           </div>
           <span class="status-badge">${escapeHtml(site.county)}</span>
         </div>
-        <p class="site-notes">${escapeHtml(site.notes)}</p>
+        ${notesHtml}
         <div class="site-coords">${formatCoord(site.lat)}, ${formatCoord(site.lng)}</div>
         <div class="site-actions">
           <a class="primary-link" data-route-link="${site.id}" href="${routeUrl}" target="_blank" rel="noopener">Route</a>
