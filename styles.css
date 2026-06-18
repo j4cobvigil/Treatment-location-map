@@ -307,6 +307,19 @@ input[type="search"]:focus {
   cursor: pointer;
 }
 
+.site-card.is-inactive {
+  background: #f8faff;
+}
+
+.site-card.is-inactive h3,
+.site-card.is-inactive .site-coords {
+  color: #68738a;
+}
+
+.site-card.is-inactive .site-status-text {
+  color: #7c869c;
+}
+
 .site-card:hover,
 .site-card:focus-visible,
 .site-card.is-active {
@@ -346,6 +359,64 @@ input[type="search"]:focus {
   gap: 8px;
 }
 
+.active-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
+  color: var(--accent-dark);
+  background: var(--panel-soft);
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.active-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #98a2b8;
+  transition: background 140ms ease;
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(31, 38, 51, 0.22);
+  transition: transform 140ms ease;
+}
+
+.active-toggle input:checked + .toggle-switch {
+  background: var(--accent);
+}
+
+.active-toggle input:checked + .toggle-switch::after {
+  transform: translateX(14px);
+}
+
+.active-toggle:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .primary-link,
 .secondary-link {
   display: inline-flex;
@@ -357,6 +428,40 @@ input[type="search"]:focus {
   font-size: 0.86rem;
   font-weight: 800;
   text-decoration: none;
+}
+
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border-radius: 6px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  border: 1px solid var(--accent);
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.primary-button:hover {
+  background: var(--accent-dark);
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  color: var(--accent-dark);
+  background: var(--panel);
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .primary-link {
@@ -390,6 +495,65 @@ input[type="search"]:focus {
   border-radius: 8px;
   color: var(--muted);
   background: #fbfcfa;
+}
+
+.pin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(16, 24, 40, 0.42);
+}
+
+.pin-dialog {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 360px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 18px;
+  background: var(--panel);
+  box-shadow: 0 22px 60px rgba(16, 24, 40, 0.28);
+}
+
+.pin-dialog h2 {
+  font-size: 1.12rem;
+}
+
+.pin-dialog p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.pin-input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 11px;
+  color: var(--ink);
+  background: var(--panel);
+  outline: none;
+}
+
+.pin-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.pin-error {
+  min-height: 20px;
+  color: #b42318;
+  font-weight: 800;
+}
+
+.pin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .map-panel {
@@ -570,6 +734,20 @@ input[type="search"]:focus {
   background: var(--warning);
 }
 
+.well-marker.marker-inactive {
+  opacity: 0.68;
+}
+
+.well-marker.marker-inactive span {
+  background: #7b8498;
+}
+
+.well-marker.marker-active.marker-inactive span {
+  width: 15px;
+  height: 15px;
+  background: #626b7f;
+}
+
 .map-fallback {
   display: none;
   position: absolute;
@@ -609,6 +787,11 @@ input[type="search"]:focus {
   width: 24px;
   height: 24px;
   background: var(--warning);
+}
+
+.fallback-marker.marker-inactive {
+  opacity: 0.68;
+  background: #7b8498;
 }
 
 .detail-panel {
@@ -691,5 +874,11 @@ input[type="search"]:focus {
   .site-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .active-toggle {
+    grid-column: 1 / -1;
+    justify-content: center;
+    margin-left: 0;
   }
 }

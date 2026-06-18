@@ -1,8 +1,13 @@
 (function () {
   const sites = Array.isArray(window.WELL_SITES) ? window.WELL_SITES : [];
+  const ACTIVE_STORAGE_KEY = "enviroklean.locationActiveState.v1";
+  const ACTIVE_PIN = "3215";
+  const ACTIVE_UNLOCK_KEY = "enviroklean.activeToggleUnlocked.v1";
+  let activePinDialog = null;
   const state = {
     filteredSites: sites,
     selectedId: sites[0]?.id || null,
+    activeById: loadActiveState(),
     map: null,
     markers: new Map(),
     fallbackMarkers: new Map()
@@ -33,6 +38,132 @@
     return Number(value).toFixed(5);
   }
 
+  function loadActiveState() {
+    try {
+      return JSON.parse(window.localStorage.getItem(ACTIVE_STORAGE_KEY)) || {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function saveActiveState() {
+    try {
+      window.localStorage.setItem(ACTIVE_STORAGE_KEY, JSON.stringify(state.activeById));
+    } catch (error) {
+      // The app still works if localStorage is disabled; toggles just won't persist.
+    }
+  }
+
+  function isActiveToggleUnlocked() {
+    try {
+      return window.sessionStorage.getItem(ACTIVE_UNLOCK_KEY) === "true";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function unlockActiveToggles() {
+    try {
+      window.sessionStorage.setItem(ACTIVE_UNLOCK_KEY, "true");
+    } catch (error) {
+      // If sessionStorage is unavailable, the current successful PIN entry still allows this toggle.
+    }
+  }
+
+  function confirmActiveToggleAccess() {
+    if (isActiveToggleUnlocked()) {
+      return Promise.resolve(true);
+    }
+
+    if (activePinDialog) {
+      activePinDialog.input.focus();
+      return activePinDialog.promise;
+    }
+
+    const overlay = document.createElement("div");
+    overlay.className = "pin-modal";
+    overlay.innerHTML = `
+      <form class="pin-dialog" novalidate>
+        <h2>Enter PIN</h2>
+        <p>Active/Inactive changes require authorization.</p>
+        <label class="field">
+          <span>PIN</span>
+          <input class="pin-input" type="password" inputmode="numeric" autocomplete="off" aria-label="PIN" />
+        </label>
+        <p class="pin-error" aria-live="polite"></p>
+        <div class="pin-actions">
+          <button class="secondary-button" type="button" data-pin-cancel>Cancel</button>
+          <button class="primary-button" type="submit">Unlock</button>
+        </div>
+      </form>
+    `;
+
+    document.body.append(overlay);
+
+    const form = overlay.querySelector("form");
+    const input = overlay.querySelector(".pin-input");
+    const error = overlay.querySelector(".pin-error");
+    const cancelButton = overlay.querySelector("[data-pin-cancel]");
+
+    const promise = new Promise((resolve) => {
+      function close(result) {
+        overlay.remove();
+        activePinDialog = null;
+        resolve(result);
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        if (input.value === ACTIVE_PIN) {
+          unlockActiveToggles();
+          close(true);
+          return;
+        }
+
+        error.textContent = "Incorrect PIN. Status was not changed.";
+        input.value = "";
+        input.focus();
+      });
+
+      cancelButton.addEventListener("click", () => close(false));
+
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) {
+          close(false);
+        }
+      });
+
+      overlay.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          close(false);
+        }
+      });
+    });
+
+    activePinDialog = { input, promise };
+    input.focus();
+
+    return promise;
+  }
+
+  function isSiteActive(site) {
+    if (Object.prototype.hasOwnProperty.call(state.activeById, site.id)) {
+      return state.activeById[site.id] !== false;
+    }
+
+    return site.active !== false;
+  }
+
+  function getSiteStatus(site) {
+    return isSiteActive(site) ? "Active" : "Inactive";
+  }
+
+  function setSiteActive(siteId, isActive) {
+    state.activeById[siteId] = Boolean(isActive);
+    saveActiveState();
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -43,7 +174,7 @@
   }
 
   function siteSearchText(site) {
-    return [site.name, site.type, site.status, site.county, site.notes].join(" ").toLowerCase();
+    return [site.name, site.type, site.status, getSiteStatus(site), site.county, site.notes].join(" ").toLowerCase();
   }
 
   function buildDirectionsUrl(site) {
@@ -100,6 +231,31 @@
     }
   }
 
+  function buildPopupHtml(site) {
+    return `<strong>${escapeHtml(site.name)}</strong><br>${escapeHtml(site.type)} - ${getSiteStatus(site)}<br>${formatCoord(site.lat)}, ${formatCoord(site.lng)}`;
+  }
+
+  function syncMarkerStatusClasses() {
+    state.markers.forEach((marker, id) => {
+      const site = sites.find((item) => item.id === id);
+      const element = marker.getElement?.();
+      if (site && element) {
+        element.classList.toggle("marker-inactive", !isSiteActive(site));
+      }
+
+      if (site && marker.setPopupContent) {
+        marker.setPopupContent(buildPopupHtml(site));
+      }
+    });
+
+    state.fallbackMarkers.forEach((marker, id) => {
+      const site = sites.find((item) => item.id === id);
+      if (site) {
+        marker.classList.toggle("marker-inactive", !isSiteActive(site));
+      }
+    });
+  }
+
   function selectSite(siteId, options = {}) {
     const site = sites.find((item) => item.id === siteId);
     if (!site) {
@@ -113,18 +269,22 @@
     });
 
     state.markers.forEach((marker, id) => {
+      const markerSite = sites.find((item) => item.id === id);
       const element = marker.getElement?.();
       if (element) {
         element.classList.toggle("marker-active", id === site.id);
+        element.classList.toggle("marker-inactive", markerSite ? !isSiteActive(markerSite) : false);
       }
     });
 
     state.fallbackMarkers.forEach((marker, id) => {
+      const markerSite = sites.find((item) => item.id === id);
       marker.classList.toggle("marker-active", id === site.id);
+      marker.classList.toggle("marker-inactive", markerSite ? !isSiteActive(markerSite) : false);
     });
 
     els.detailName.textContent = site.name;
-    els.detailMeta.textContent = `${site.type} - ${site.status} - ${site.county} - ${formatCoord(site.lat)}, ${formatCoord(site.lng)}`;
+    els.detailMeta.textContent = `${site.type} - ${getSiteStatus(site)} - ${site.county} - ${formatCoord(site.lat)}, ${formatCoord(site.lng)}`;
     els.detailRoute.classList.remove("disabled");
     els.detailMapLink.classList.remove("disabled");
     els.detailRoute.href = buildDirectionsUrl(site);
@@ -155,16 +315,19 @@
       item.className = "site-card";
       item.dataset.siteId = site.id;
       item.tabIndex = 0;
+      item.classList.toggle("is-inactive", !isSiteActive(site));
 
       const routeUrl = buildDirectionsUrl(site);
       const mapUrl = buildMapUrl(site);
       const notesHtml = site.notes ? `<p class="site-notes">${escapeHtml(site.notes)}</p>` : "";
+      const checkedAttr = isSiteActive(site) ? "checked" : "";
+      const statusLabel = getSiteStatus(site);
 
       item.innerHTML = `
         <div class="site-main">
           <div>
             <h3>${escapeHtml(site.name)}</h3>
-            <p>${escapeHtml(site.type)} - ${escapeHtml(site.status)}</p>
+            <p>${escapeHtml(site.type)} - <span class="site-status-text">${statusLabel}</span></p>
           </div>
           <span class="status-badge">${escapeHtml(site.county)}</span>
         </div>
@@ -173,11 +336,58 @@
         <div class="site-actions">
           <a class="primary-link" data-route-link="${site.id}" href="${routeUrl}" target="_blank" rel="noopener">Route</a>
           <a class="secondary-link" href="${mapUrl}" target="_blank" rel="noopener">Open map</a>
+          <label class="active-toggle">
+            <input data-active-toggle="${site.id}" type="checkbox" ${checkedAttr} />
+            <span class="toggle-switch" aria-hidden="true"></span>
+            <span class="toggle-label">${statusLabel}</span>
+          </label>
         </div>
       `;
 
+      const activeToggle = item.querySelector("[data-active-toggle]");
+      const activeToggleControl = item.querySelector(".active-toggle");
+      function updateActiveToggle() {
+        setSiteActive(site.id, activeToggle.checked);
+        state.selectedId = site.id;
+
+        if (els.searchInput.value.trim()) {
+          applySearch();
+        } else {
+          renderList();
+        }
+
+        syncMarkerStatusClasses();
+        selectSite(site.id, { pan: false });
+      }
+
+      activeToggleControl.addEventListener("click", async (event) => {
+        event.stopPropagation();
+
+        if (event.target !== activeToggle) {
+          event.preventDefault();
+          if (!(await confirmActiveToggleAccess())) {
+            return;
+          }
+          activeToggle.checked = !activeToggle.checked;
+          updateActiveToggle();
+        }
+      });
+
+      activeToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      activeToggle.addEventListener("change", async (event) => {
+        event.stopPropagation();
+        const nextChecked = activeToggle.checked;
+        if (!(await confirmActiveToggleAccess())) {
+          activeToggle.checked = !nextChecked;
+          return;
+        }
+        updateActiveToggle();
+      });
+
       item.addEventListener("click", (event) => {
-        if (event.target.closest("a")) {
+        if (event.target.closest("a, .active-toggle")) {
           return;
         }
         selectSite(site.id);
@@ -226,13 +436,14 @@
         alt: site.name
       })
         .addTo(state.map)
-        .bindPopup(`<strong>${escapeHtml(site.name)}</strong><br>${escapeHtml(site.type)}<br>${formatCoord(site.lat)}, ${formatCoord(site.lng)}`);
+        .bindPopup(buildPopupHtml(site));
 
       marker.on("click", () => selectSite(site.id, { pan: false }));
       state.markers.set(site.id, marker);
     });
 
     fitMapToSites();
+    syncMarkerStatusClasses();
     return true;
   }
 
@@ -257,6 +468,7 @@
       marker.setAttribute("aria-label", site.name);
       marker.style.left = `${8 + ((site.lng - minLng) / lngRange) * 84}%`;
       marker.style.top = `${8 + (1 - (site.lat - minLat) / latRange) * 84}%`;
+      marker.classList.toggle("marker-inactive", !isSiteActive(site));
       marker.addEventListener("click", () => selectSite(site.id));
       els.fallbackGrid.append(marker);
       state.fallbackMarkers.set(site.id, marker);
