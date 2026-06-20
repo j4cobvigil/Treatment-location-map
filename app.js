@@ -58,6 +58,7 @@
     detailMapLink: document.querySelector("#detailMapLink"),
     weatherWidget: document.querySelector("#weatherWidget"),
     weatherMain: document.querySelector("#weatherMain"),
+    weatherLocation: document.querySelector("#weatherLocation"),
     weatherDetail: document.querySelector("#weatherDetail"),
     weatherButton: document.querySelector("#weatherButton")
   };
@@ -232,8 +233,12 @@
     return WEATHER_CODES[code] || "Current conditions";
   }
 
-  function setWeatherState(main, detail, buttonText = "Refresh", isLoading = false) {
-    if (!els.weatherWidget) {
+  function isWeatherWidgetVisible() {
+    return Boolean(els.weatherWidget && window.getComputedStyle(els.weatherWidget).display !== "none");
+  }
+
+  function setWeatherState(main, detail, buttonText = "Refresh", isLoading = false, locationName) {
+    if (!els.weatherWidget || !els.weatherMain || !els.weatherDetail || !els.weatherButton) {
       return;
     }
 
@@ -241,6 +246,10 @@
     els.weatherDetail.textContent = detail;
     els.weatherButton.textContent = buttonText;
     els.weatherButton.disabled = isLoading;
+
+    if (els.weatherLocation && locationName) {
+      els.weatherLocation.textContent = locationName;
+    }
   }
 
   function getCurrentPosition() {
@@ -278,7 +287,54 @@
     return data.current;
   }
 
+  function formatSubdivision(data) {
+    if (data.countryCode === "US" && data.principalSubdivisionCode?.startsWith("US-")) {
+      return data.principalSubdivisionCode.slice(3);
+    }
+
+    return data.principalSubdivision || "";
+  }
+
+  function formatLocationName(data) {
+    const locality = data.city || data.locality || "";
+    const subdivision = formatSubdivision(data);
+
+    if (locality && subdivision) {
+      return `${locality}, ${subdivision}`;
+    }
+
+    if (locality) {
+      return locality;
+    }
+
+    if (subdivision && data.countryName) {
+      return `${subdivision}, ${data.countryName}`;
+    }
+
+    return subdivision || data.countryName || "Current location";
+  }
+
+  async function fetchLocationName(lat, lng) {
+    const params = new URLSearchParams({
+      latitude: lat.toFixed(5),
+      longitude: lng.toFixed(5),
+      localityLanguage: "en"
+    });
+
+    const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?${params.toString()}`);
+
+    if (!response.ok) {
+      throw new Error("Location lookup failed.");
+    }
+
+    return formatLocationName(await response.json());
+  }
+
   async function loadWeather() {
+    if (!isWeatherWidgetVisible()) {
+      return;
+    }
+
     if (!("geolocation" in navigator)) {
       setWeatherState("--", "Location weather is not supported in this browser.", "Unavailable");
       return;
@@ -288,16 +344,28 @@
 
     try {
       const position = await getCurrentPosition();
-      const current = await fetchWeather(position.coords.latitude, position.coords.longitude);
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const [weatherResult, locationResult] = await Promise.allSettled([fetchWeather(lat, lng), fetchLocationName(lat, lng)]);
+
+      if (weatherResult.status === "rejected") {
+        throw weatherResult.reason;
+      }
+
+      const current = weatherResult.value;
+      const locationName = locationResult.status === "fulfilled" ? locationResult.value : "Current location";
       const temp = Math.round(current.temperature_2m);
       const wind = Math.round(current.wind_speed_10m);
       const humidity = Math.round(current.relative_humidity_2m);
       setWeatherState(
         `${temp} F`,
-        `${describeWeatherCode(current.weather_code)} - Wind ${wind} mph - Humidity ${humidity}%`
+        `${describeWeatherCode(current.weather_code)} - Wind ${wind} mph - Humidity ${humidity}%`,
+        "Refresh",
+        false,
+        locationName
       );
     } catch (error) {
-      setWeatherState("--", "Weather unavailable. Check location permission and connection.", "Try again");
+      setWeatherState("--", "Weather unavailable. Check location permission and connection.", "Try again", false, "Location unavailable");
     }
   }
 
@@ -307,6 +375,10 @@
     }
 
     els.weatherButton.addEventListener("click", loadWeather);
+
+    if (!isWeatherWidgetVisible()) {
+      return;
+    }
 
     if (!navigator.permissions?.query) {
       return;

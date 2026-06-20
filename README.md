@@ -31,6 +31,6 @@ The route buttons use Google Maps URLs with latitude and longitude destinations.
 
 Each location card has an Active/Inactive checkbox. Checked locations display as `Active`; unchecked locations display as `Inactive`. Changing a status requires the app PIN. After the correct PIN is entered, toggles stay unlocked for that browser session. Those choices are saved in the browser's local storage, so they persist on that device/browser after refresh.
 
-The weather widget uses the browser's location permission and the Open-Meteo forecast API to show current local temperature, conditions, wind, and humidity. It works best from an HTTPS page such as GitHub Pages. If the page is opened directly as a local `file://` URL, some browsers may block location access.
+The mobile weather widget uses the browser's location permission, the Open-Meteo forecast API, and BigDataCloud reverse geocoding to show current local temperature, place name, conditions, wind, and humidity. It works best from an HTTPS page such as GitHub Pages. If the page is opened directly as a local `file://` URL, some browsers may block location access.
 
 The map uses Leaflet and OpenStreetMap tiles from a CDN. If the CDN is unavailable, the site list and Google Maps route links still work.

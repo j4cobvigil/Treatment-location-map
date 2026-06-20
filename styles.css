@@ -735,7 +735,7 @@ input[type="search"]:focus {
   top: 16px;
   right: 58px;
   z-index: 1200;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 12px;
   width: min(360px, calc(100% - 92px));
@@ -767,6 +767,17 @@ input[type="search"]:focus {
   font-size: 1.2rem;
   font-weight: 900;
   line-height: 1.1;
+}
+
+.weather-location {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .weather-detail {
@@ -873,6 +884,7 @@ input[type="search"]:focus {
   }
 
   .weather-widget {
+    display: flex;
     position: static;
     grid-column: 2;
     grid-row: 1 / span 2;
@@ -916,6 +928,10 @@ input[type="search"]:focus {
 
   .weather-main {
     font-size: 1rem;
+  }
+
+  .weather-location {
+    font-size: 0.72rem;
   }
 
   .weather-detail {
