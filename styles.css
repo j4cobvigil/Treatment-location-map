@@ -190,70 +190,6 @@ input[type="search"]:focus {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.origin-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px;
-  gap: 8px;
-}
-
-.icon-button {
-  display: grid;
-  place-items: center;
-  min-width: 42px;
-  min-height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: var(--accent-dark);
-  background: var(--panel);
-  cursor: pointer;
-}
-
-.icon-button:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.icon-button:disabled {
-  cursor: wait;
-  opacity: 0.55;
-}
-
-.mode-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 4px;
-  border-radius: 8px;
-  background: var(--panel-soft);
-}
-
-.mode-row label {
-  min-width: 0;
-  cursor: pointer;
-}
-
-.mode-row input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.mode-row span {
-  display: grid;
-  place-items: center;
-  min-height: 34px;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.mode-row input:checked + span {
-  color: var(--accent-dark);
-  background: var(--panel);
-  box-shadow: 0 1px 4px rgba(31, 41, 36, 0.12);
-}
-
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -794,6 +730,75 @@ input[type="search"]:focus {
   background: #7b8498;
 }
 
+.weather-widget {
+  position: fixed;
+  top: 16px;
+  right: 58px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(360px, calc(100% - 92px));
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.weather-widget > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.weather-label {
+  margin-bottom: 3px;
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.weather-main {
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.weather-detail {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.weather-button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 0 11px;
+  color: #ffffff;
+  background: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.weather-button:hover {
+  background: var(--accent-dark);
+}
+
+.weather-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .detail-panel {
   position: absolute;
   right: 22px;
@@ -847,6 +852,33 @@ input[type="search"]:focus {
     position: static;
     margin: 12px;
   }
+
+  .app-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(190px, 240px);
+    align-items: start;
+    gap: 10px 12px;
+  }
+
+  .header-title {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .site-count {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .weather-widget {
+    position: static;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 100%;
+    margin: 0;
+  }
 }
 
 @media (max-width: 560px) {
@@ -855,7 +887,6 @@ input[type="search"]:focus {
     max-height: none;
   }
 
-  .app-header,
   .site-main,
   .detail-panel {
     align-items: stretch;
@@ -863,11 +894,39 @@ input[type="search"]:focus {
   }
 
   .app-header {
-    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(126px, 142px);
+    gap: 8px 10px;
+    margin-bottom: 14px;
   }
 
-  .mode-row {
-    grid-template-columns: 1fr;
+  h1 {
+    font-size: 1.34rem;
+  }
+
+  .weather-widget {
+    display: grid;
+    gap: 7px;
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .weather-label {
+    display: none;
+  }
+
+  .weather-main {
+    font-size: 1rem;
+  }
+
+  .weather-detail {
+    display: none;
+  }
+
+  .weather-button {
+    width: 100%;
+    min-height: 32px;
+    padding: 0 7px;
+    font-size: 0.72rem;
   }
 
   .detail-actions,

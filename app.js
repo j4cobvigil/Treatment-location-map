@@ -3,6 +3,36 @@
   const ACTIVE_STORAGE_KEY = "enviroklean.locationActiveState.v1";
   const ACTIVE_PIN = "3215";
   const ACTIVE_UNLOCK_KEY = "enviroklean.activeToggleUnlocked.v1";
+  const WEATHER_CODES = {
+    0: "Clear",
+    1: "Mainly clear",
+    2: "Partly cloudy",
+    3: "Cloudy",
+    45: "Fog",
+    48: "Rime fog",
+    51: "Light drizzle",
+    53: "Drizzle",
+    55: "Heavy drizzle",
+    56: "Freezing drizzle",
+    57: "Heavy freezing drizzle",
+    61: "Light rain",
+    63: "Rain",
+    65: "Heavy rain",
+    66: "Freezing rain",
+    67: "Heavy freezing rain",
+    71: "Light snow",
+    73: "Snow",
+    75: "Heavy snow",
+    77: "Snow grains",
+    80: "Light showers",
+    81: "Showers",
+    82: "Heavy showers",
+    85: "Snow showers",
+    86: "Heavy snow showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm with hail",
+    99: "Severe thunderstorm"
+  };
   let activePinDialog = null;
   const state = {
     filteredSites: sites,
@@ -25,7 +55,11 @@
     detailName: document.querySelector("#detailName"),
     detailMeta: document.querySelector("#detailMeta"),
     detailRoute: document.querySelector("#detailRoute"),
-    detailMapLink: document.querySelector("#detailMapLink")
+    detailMapLink: document.querySelector("#detailMapLink"),
+    weatherWidget: document.querySelector("#weatherWidget"),
+    weatherMain: document.querySelector("#weatherMain"),
+    weatherDetail: document.querySelector("#weatherDetail"),
+    weatherButton: document.querySelector("#weatherButton")
   };
 
   function formatCoord(value) {
@@ -192,6 +226,100 @@
     });
 
     return `https://www.google.com/maps/search/?${params.toString()}`;
+  }
+
+  function describeWeatherCode(code) {
+    return WEATHER_CODES[code] || "Current conditions";
+  }
+
+  function setWeatherState(main, detail, buttonText = "Refresh", isLoading = false) {
+    if (!els.weatherWidget) {
+      return;
+    }
+
+    els.weatherMain.textContent = main;
+    els.weatherDetail.textContent = detail;
+    els.weatherButton.textContent = buttonText;
+    els.weatherButton.disabled = isLoading;
+  }
+
+  function getCurrentPosition() {
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: false,
+        maximumAge: 600000,
+        timeout: 10000
+      });
+    });
+  }
+
+  async function fetchWeather(lat, lng) {
+    const params = new URLSearchParams({
+      latitude: lat.toFixed(4),
+      longitude: lng.toFixed(4),
+      current: "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
+      temperature_unit: "fahrenheit",
+      wind_speed_unit: "mph",
+      forecast_days: "1",
+      timezone: "auto"
+    });
+
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+
+    if (!response.ok) {
+      throw new Error("Weather request failed.");
+    }
+
+    const data = await response.json();
+    if (!data.current) {
+      throw new Error("Weather response was missing current conditions.");
+    }
+
+    return data.current;
+  }
+
+  async function loadWeather() {
+    if (!("geolocation" in navigator)) {
+      setWeatherState("--", "Location weather is not supported in this browser.", "Unavailable");
+      return;
+    }
+
+    setWeatherState("--", "Getting local weather...", "Loading", true);
+
+    try {
+      const position = await getCurrentPosition();
+      const current = await fetchWeather(position.coords.latitude, position.coords.longitude);
+      const temp = Math.round(current.temperature_2m);
+      const wind = Math.round(current.wind_speed_10m);
+      const humidity = Math.round(current.relative_humidity_2m);
+      setWeatherState(
+        `${temp} F`,
+        `${describeWeatherCode(current.weather_code)} - Wind ${wind} mph - Humidity ${humidity}%`
+      );
+    } catch (error) {
+      setWeatherState("--", "Weather unavailable. Check location permission and connection.", "Try again");
+    }
+  }
+
+  async function initWeather() {
+    if (!els.weatherWidget || !els.weatherButton) {
+      return;
+    }
+
+    els.weatherButton.addEventListener("click", loadWeather);
+
+    if (!navigator.permissions?.query) {
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({ name: "geolocation" });
+      if (permission.state === "granted") {
+        loadWeather();
+      }
+    } catch (error) {
+      // Permission status is optional; the button still works when the user taps it.
+    }
   }
 
   function fitMapToSites(siteSet = sites) {
@@ -499,6 +627,8 @@
     if (state.selectedId) {
       selectSite(state.selectedId, { pan: false });
     }
+
+    initWeather();
   }
 
   init();
