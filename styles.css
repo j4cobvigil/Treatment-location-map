@@ -894,18 +894,29 @@ input[type="search"]:focus {
 }
 
 @media (max-width: 920px) and (max-height: 560px) {
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
   .sidebar {
     max-height: none;
     overflow: visible;
   }
 
   .site-list {
-    max-height: 30vh;
+    flex: none;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .map-panel {
+    min-height: 0;
   }
 
   .map {
-    height: 58vh;
-    min-height: 220px;
+    height: 68vh;
+    min-height: 260px;
   }
 }
 
